@@ -45,3 +45,5 @@ build/
 # Passenger
 passenger*.log
 passenger*.lock
+.vagrant/
+extras/secrets-passenger.conf
