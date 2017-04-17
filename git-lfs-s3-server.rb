@@ -23,7 +23,9 @@ GitLfsS3::Application.set :endpoint, ENV['LFS_CEPH_ENDPOINT']
 GitLfsS3::Application.set :logger, Logger.new(STDOUT)
 
 # GitHub Organization used to verify membership.
-GITHUB_ORG = ENV['LFS_GITHUB_ORG'] || 'lsst'
+GITHUB_ORG = ENV['LFS_GITHUB_ORG'] || 'NVIDIAGameWorks'
+
+GitLfsS3::Application.settings.logger.level = Logger::WARN
 
 # Configure and connect redis.
 @redis = Redis.new
@@ -62,11 +64,15 @@ end
 ####
 
 def org_member?(client)
+  GitLfsS3::Application.settings.logger.info "Trying to authenticate user (is org_member of #{GITHUB_ORG})"
+  
   begin
     client.user # Authenticate User.
     if client.org_member?(GITHUB_ORG, client.user.login)
+	  GitLfsS3::Application.settings.logger.info "User #{client.user.login} is a member of org"
       return true
     else
+	  GitLfsS3::Application.settings.logger.info "User #{client.user.login} is NOT a member of org"
       return false
     end
   rescue Octokit::OneTimePasswordRequired => e
@@ -75,6 +81,7 @@ def org_member?(client)
       'Please use a personal access token.'
     return false
   rescue Octokit::Unauthorized
+    GitLfsS3::Application.settings.logger.info "User #{client.user.login} is using a bad password!"
     return false
   end
 end
@@ -113,6 +120,8 @@ GitLfsS3::Application.on_authenticate do |username, password, is_safe|
   if is_safe
     true
   else
+    GitLfsS3::Application.settings.logger.info "Trying to authenticate user #{username}, #{password}"
+  
     client = Octokit::Client.new(:login => username,
                                  :password => password)
     verify_user_and_permissions?(client, username, password)
