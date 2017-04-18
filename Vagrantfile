@@ -19,16 +19,36 @@ SCRIPT
 
 
 Vagrant.configure("2") do |config|
+	
+	# Use this box for VMWare Workstation
 	config.vm.box = "bento/ubuntu-16.04"
 
+	# Override box for Virtualbox
+	config.vm.provider "virtualbox" do |vb, override|
+		override.vm.box = "ubuntu/xenial64"
+	end
+
+	# Override box for AWS
+	config.vm.provider "aws" do |aws, override|
+		override.vm.box = "dummy"
+		
+		aws.ami = "AMI HERE"
+		aws.keypair_name = "KEYPAIR NAME"
+		
+		override.ssh.username = "ubuntu"
+		override.ssh.private_key_path = ""
+	end
+	
 	# Create a forwarded port mapping which allows access to a specific port
 	# within the machine from a port on the host machine. In the example below,
 	# accessing "localhost:8080" will access port 80 on the guest machine.
 	config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
-	
+
+	# Install RVM
 	config.vm.provision "shell", privileged: false, inline: $installrvmscript
 
+	# Setup RVM. We do this from a shell script since we need to be in a "login" shell for this to work.
 	config.vm.provision "shell", privileged: false, path: "./setuprvm.sh"
 	 
 	config.vm.provision "shell", inline: <<-SHELL

@@ -1,0 +1,15 @@
+    s3_region: "{{ lookup('ini', 'aws.region type=properties file=aws.properties') }}"
+    s3_access_key_id: "{{ lookup('ini', 'aws.access_key_id type=properties file=aws.properties') }}"
+    s3_secret_access_key: "{{ lookup('ini', 'aws.secret_access_key type=properties file=aws.properties') }}"
+    s3_bucket: "{{ lookup('ini', 'aws.bucket type=properties file=aws.properties') }}"
+    lfs_server_url: "{{ lookup('ini', 'lfs.server.url type=properties file=aws.properties') }}"
+    lfs_github_org: "{{ lookup('ini', 'lfs.github.org type=properties file=aws.properties') }}"
+
+	
+aws.region=eu-central-1
+aws.access_key_id=AKIAIHFEHCN3OSOSOBWA
+aws.secret_access_key=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
+aws.bucket=tamedtornado-lfs
+
+lfs.server.url=http://whatever/
+lfs.github.org=NVIDIAGameWorks

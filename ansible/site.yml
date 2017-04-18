@@ -1,0 +1,87 @@
+--- 
+- 
+  name: Setup the LFS servers
+  hosts: lfs
+  vars:
+    ruby_version: 2.4.0
+    lfs_user: ubuntu
+    s3_region: "{{ lookup('ini', 'aws.region type=properties file=aws.properties') }}"
+    s3_access_key_id: "{{ lookup('ini', 'aws.access_key_id type=properties file=aws.properties') }}"
+    s3_secret_access_key: "{{ lookup('ini', 'aws.secret_access_key type=properties file=aws.properties') }}"
+    s3_bucket: "{{ lookup('ini', 'aws.bucket type=properties file=aws.properties') }}"
+    lfs_server_url: "{{ lookup('ini', 'lfs.server.url type=properties file=aws.properties') }}"
+    lfs_github_org: "{{ lookup('ini', 'lfs.github.org type=properties file=aws.properties') }}"
+    lfs_app_root: "/srv/git-lfs-s3"
+    lfs_app_location: "/srv/git-lfs-s3/public"
+    lfs_server_name: "git-lfs.nvidia"
+    passenger_app_env: development
+  roles: 
+    - 
+      role: rvm1
+      rvm1_rubies: 
+        - "ruby-{{ ruby_version }}"
+      rvm1_user: "{{ lfs_user }}"
+      tags: ruby
+    -
+      role: passenger
+      passenger_ruby: /home/ubuntu/.rvm/gems/ruby-2.4.0/wrappers/ruby
+    -
+      role: redis
+      become: true
+      become_user: root
+
+  tasks:
+  - name: Template and copy the git-lfs-s3-server site file
+    template: src=git-lfs-s3-server.conf.j2 dest=/etc/nginx/sites-enabled/git-lfs-s3-server.conf
+    become: true
+    become_user: root
+
+  - name: Template and copy the secrets file for passenger
+    template: src=secrets-passenger.conf.j2 dest=/etc/nginx/conf.d/secrets-passenger.conf
+    become: true
+    become_user: root
+
+  - name: Copy the SSL cert
+    copy: src=../certs/server.crt dest=/etc/ssl/certs/server.crt
+    become: true
+    become_user: root
+
+  - name: Copy the SSL key
+    copy: src=../certs/server.key dest=/etc/ssl/private/server.key
+    become: true
+    become_user: root
+
+  - name: Create the LFS server app directory
+    file: path={{lfs_app_location}} state=directory owner=ubuntu group=www-data mode=0777 recurse=yes
+    become: true
+
+  - name: Deploy the LFS server app
+    copy:
+      src: "{{ item }}"
+      dest: "{{ lfs_app_root }}"
+      owner: ubuntu
+      group: www-data
+    with_items:
+      - ../Gemfile
+      - ../config.ru
+      - ../git-lfs-s3-server.rb
+    become: true
+    
+  - name: Use Bundler to install the gem dependencies
+    bundler:
+      state: present
+      chdir: "{{ lfs_app_root }}"
+      executable: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin/bundler"
+      gem_path: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}"
+    environment:
+      PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin:\
+             {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global/bin:\
+             {{ ansible_env.HOME }}/.rvm/rubies/ruby-{{ ruby_version }}/bin:\
+             {{ ansible_env.HOME }}/.rvm/bin:\
+             {{ lookup('env', 'PATH') }}"
+      GEM_PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}:\
+                 {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global"
+    
+  - name: Restart nginx
+    service: name=nginx state=restarted
+    become: true

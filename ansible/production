@@ -1,0 +1,3 @@
+[lfs]
+ec2-54-93-254-30.eu-central-1.compute.amazonaws.com ansible_python_interpreter=/usr/bin/python3
+

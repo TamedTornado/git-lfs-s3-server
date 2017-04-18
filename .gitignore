@@ -47,3 +47,4 @@ passenger*.log
 passenger*.lock
 .vagrant/
 extras/secrets-passenger.conf
+ansible/aws.properties
