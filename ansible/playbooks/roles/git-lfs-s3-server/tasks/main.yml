@@ -1,0 +1,68 @@
+  - name: Template and copy the git-lfs-s3-server site file
+    template:
+      src: git-lfs-s3-server.conf.j2
+      dest: /etc/nginx/sites-enabled/git-lfs-s3-server.conf
+    become: true
+    become_user: root
+
+  - name: Template and copy the secrets file for passenger
+    template:
+      src: secrets-passenger.conf.j2
+      dest: /etc/nginx/conf.d/secrets-passenger.conf
+    become: true
+    become_user: root
+
+  - name: Copy the SSL cert
+    copy:
+      src: "roles/git-lfs-s3-server/files/server.crt"
+      dest: /etc/ssl/certs/server.crt
+    become: true
+    become_user: root
+
+  - name: Copy the SSL key
+    copy:
+      src: "roles/git-lfs-s3-server/files/server.key"
+      dest: /etc/ssl/private/server.key
+    become: true
+    become_user: root
+
+  - name: Create the LFS server app directory
+    file:
+      path: "{{ lfs_app_location }}"
+      state: directory
+      owner: ubuntu
+      group: www-data
+      mode: 0777
+      recurse: yes
+    become: true
+
+  - name: Deploy the LFS server app
+    copy:
+      src: "{{ item }}"
+      dest: "{{ lfs_app_root }}"
+      owner: ubuntu
+      group: www-data
+    with_items:
+      - ../Gemfile
+      - ../config.ru
+      - ../git-lfs-s3-server.rb
+    become: true
+
+  - name: Use Bundler to install the gem dependencies
+    bundler:
+      state: present
+      chdir: "{{ lfs_app_root }}"
+      executable: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin/bundler"
+      gem_path: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}"
+    environment:
+      PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin:\
+             {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global/bin:\
+             {{ ansible_env.HOME }}/.rvm/rubies/ruby-{{ ruby_version }}/bin:\
+             {{ ansible_env.HOME }}/.rvm/bin:\
+             {{ lookup('env', 'PATH') }}"
+      GEM_PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}:\
+                 {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global"
+
+  - name: Restart nginx
+    service: name=nginx state=restarted
+    become: true
