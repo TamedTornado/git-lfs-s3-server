@@ -1,28 +1,28 @@
   - name: Template and copy the git-lfs-s3-server site file
     template:
-      src: git-lfs-s3-server.conf.j2
-      dest: /etc/nginx/sites-enabled/git-lfs-s3-server.conf
+      src: "git-lfs-s3-server.conf.j2"
+      dest: "/etc/nginx/sites-enabled/git-lfs-s3-server.conf"
     become: true
     become_user: root
 
   - name: Template and copy the secrets file for passenger
     template:
-      src: secrets-passenger.conf.j2
-      dest: /etc/nginx/conf.d/secrets-passenger.conf
+      src: "secrets-passenger.conf.j2"
+      dest: "/etc/nginx/conf.d/secrets-passenger.conf"
     become: true
     become_user: root
 
   - name: Copy the SSL cert
     copy:
       src: "roles/git-lfs-s3-server/files/server.crt"
-      dest: /etc/ssl/certs/server.crt
+      dest: "/etc/ssl/certs/server.crt"
     become: true
     become_user: root
 
   - name: Copy the SSL key
     copy:
       src: "roles/git-lfs-s3-server/files/server.key"
-      dest: /etc/ssl/private/server.key
+      dest: "/etc/ssl/private/server.key"
     become: true
     become_user: root
 
@@ -64,5 +64,7 @@
                  {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global"
 
   - name: Restart nginx
-    service: name=nginx state=restarted
+    service:
+      name: nginx
+      state: restarted
     become: true
