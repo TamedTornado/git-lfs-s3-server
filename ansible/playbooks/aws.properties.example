@@ -1,0 +1,7 @@
+aws.region=eu-central-1
+aws.access_key_id=HAKAJIRAZULU
+aws.secret_access_key=HAKAJIRAZULU
+aws.bucket=BUCKETNAME
+
+lfs.server.url=SERVERURL
+lfs.github.org=ORGNAME
