@@ -3,7 +3,8 @@
   name: Setup the LFS servers
   hosts: lfs
   vars:
-    ruby_version: 2.4.0
+    ruby_version: "2.4.0"
+    rvm1_rubies: "ruby-2.4.0"
     lfs_user: ubuntu
     s3_region: "{{ lookup('ini', 'aws.region type=properties file=aws.properties') }}"
     s3_access_key_id: "{{ lookup('ini', 'aws.access_key_id type=properties file=aws.properties') }}"
@@ -16,7 +17,7 @@
     lfs_server_name: "git-lfs.nvidia"
     passenger_app_env: development
   roles:
-    - { role: rvm1,rvm1_rubies: "ruby-{{ ruby_version }}", rvm1_user: "{{ lfs_user }}", tags: [ ruby ] }
+    - { role: rvm1, rvm1_user: "{{ lfs_user }}", tags: [ ruby ] }
     - { role: passenger,passenger_ruby: /home/ubuntu/.rvm/gems/ruby-2.4.0/wrappers/ruby }
     - { role: redis, become: true, become_user: root }
     - { role: git-lfs-s3-server }

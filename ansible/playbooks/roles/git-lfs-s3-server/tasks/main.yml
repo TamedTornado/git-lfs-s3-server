@@ -43,25 +43,17 @@
       owner: ubuntu
       group: www-data
     with_items:
-      - ../Gemfile
-      - ../config.ru
-      - ../git-lfs-s3-server.rb
+      - Gemfile
+      - config.ru
+      - git-lfs-s3-server.rb
     become: true
 
   - name: Use Bundler to install the gem dependencies
-    bundler:
-      state: present
+    command: "bash -lc '. ~/.rvm/scripts/rvm; rvm use {{ ruby_version }} --silent && bundle install'"
+    become: true
+    become_user: ubuntu
+    args:
       chdir: "{{ lfs_app_root }}"
-      executable: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin/bundler"
-      gem_path: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}"
-    environment:
-      PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}/bin:\
-             {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global/bin:\
-             {{ ansible_env.HOME }}/.rvm/rubies/ruby-{{ ruby_version }}/bin:\
-             {{ ansible_env.HOME }}/.rvm/bin:\
-             {{ lookup('env', 'PATH') }}"
-      GEM_PATH: "{{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}:\
-                 {{ ansible_env.HOME }}/.rvm/gems/ruby-{{ ruby_version }}@global"
 
   - name: Restart nginx
     service:

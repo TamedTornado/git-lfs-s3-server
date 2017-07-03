@@ -10,7 +10,7 @@
 
 # Passenger repository setup.
 - name: Add Passenger apt key.
-  sudo: yes
+  become: true
   apt_key:
     keyserver: keyserver.ubuntu.com
     id: 561F9B9CAC40B2F7
@@ -20,7 +20,7 @@
   apt: name=apt-transport-https state=present
 
 - name: Add Phusion apt repo.
-  sudo: yes
+  become: true
   apt_repository:
     repo: 'deb https://oss-binaries.phusionpassenger.com/apt/passenger {{ansible_distribution_release}} main'
     state: present
@@ -28,7 +28,7 @@
 
 # Nginx and passenger installation.
 - name: Install Nginx and Passenger.
-  sudo: yes
+  become: true
   apt: "pkg={{ item }} state=installed"
   with_items:
    - nginx-extras
@@ -36,7 +36,7 @@
 
 # Nginx and passenger configuration.
 - name: Copy Nginx configuration into place.
-  sudo: yes
+  become: true
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/nginx.conf
